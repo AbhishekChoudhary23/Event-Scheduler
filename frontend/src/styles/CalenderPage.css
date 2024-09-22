@@ -1,0 +1,21 @@
+.calendar-container{
+  height: 89vh;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  background: #c7c3c7;
+}
+
+.inside-calendar{
+  margin: 0 50px 0 50px;
+}
+
+.rs-calendar-header-has-month:not(.rs-calendar-header-has-time){
+  margin: 8px 0 0 0;
+}
+
+.rs-calendar-bordered .rs-calendar-table{
+  border-width: 3px;
+}
+
+.rs-calendar-panel .rs-calendar-table-cell-is-today .rs-calendar-table-cell-day{
+  background-color: #501455;
+}

@@ -1,0 +1,24 @@
+.css-1rtg91x-MuiDateCalendar-root {
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2) !important;
+    width: 470px !important;
+    max-height: 486px !important;
+    height: 486px !important;
+    justify-content: center;
+    align-items: center;
+    
+  }
+.css-23p0if-MuiButtonBase-root-MuiPickersDay-root.Mui-selected{
+    background-color: brown !important;
+}
+
+.css-i5q14k-MuiDayCalendar-header{
+    height: 50px !important;
+}
+
+.css-flbe84-MuiDayCalendar-weekContainer{
+    height: 45px !important;
+}
+
+.css-1t0788u-MuiPickersSlideTransition-root-MuiDayCalendar-slideTransition{
+    min-height: 350px Im !important;
+}

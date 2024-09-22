@@ -1,0 +1,44 @@
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: #501455;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .calendar-header-left {
+    display: flex;
+    align-items: center;
+    color: white;
+  }
+
+  .calendar-header h2{
+    color: white;
+  }
+  
+  .calendar-header-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-right: 16px;
+  }
+  
+  .calendar-header-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .calendar-header-button {
+    background-color: #fff;
+    border: none;
+    padding: 8px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 8px;
+    color: #501455;
+  }
+  
+  .calendar-header-button:hover {
+    background-color: #80008c;
+    color: white;
+  }
