@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToaster, Message } from "rsuite";
 import "../styles/Login.css";
+import apiRequest from "../utils/apiRequest";
 
 function Signup() {
   const [firstname, setFirstName] = useState("");
@@ -23,27 +24,12 @@ function Signup() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://localhost:3000/user/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ firstname, email, password }),
-      });
+      const data = await apiRequest(import.meta.env.VITE_SIGNUP_URL, 'POST', { firstname, email, password });
 
-      const data = await response.json();
-      console.log("Raw response data:", data); // Log the entire response data
-
-      if (response.ok) {
-        // Use optional chaining to safely access properties
-        localStorage.setItem("token", data.token ?? "");
-        localStorage.setItem("email", data.email ?? data.user?.email ?? "");
-        localStorage.setItem("userId", data.userId ?? data.user?.userid ?? "");
-
+      if (data.statusCode == 201) {
         showToast("success", "Signup successful!");
         navigate("/", { replace: true });
       } else {
-        // Handle error responses from the server
         throw new Error(data.message || "Signup failed. Please try again.");
       }
     } catch (err) {
@@ -53,6 +39,7 @@ function Signup() {
   };
 
   return (
+    <div className="container">
     <div className="form-container">
       <p className="title">Signup</p>
       <form className="form" onSubmit={handleSubmit}>
@@ -85,6 +72,7 @@ function Signup() {
           <Link to="/">Log in</Link>
         </span>
       </p>
+    </div>
     </div>
   );
 }

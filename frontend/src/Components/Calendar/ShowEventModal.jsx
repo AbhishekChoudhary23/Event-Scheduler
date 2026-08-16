@@ -9,11 +9,11 @@ function ShowEventModal({ open, onClose, modalTitle, selectedDayEvents }) {
       <Modal.Header>
         <Modal.Title>{modalTitle}</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        {selectedDayEvents.length > 0 ? (
+      <Modal.Body style={{background:"#c7c3c7"}}>
+        {selectedDayEvents.length ? (
           selectedDayEvents.map((event, index) => (
             <div key={index} className="events">
-              <Text weight="extrabold" size={30}>
+              <Text weight="extrabold" size={30} color='violet'>
                 {event.title}
               </Text>
               <p>
@@ -28,8 +28,8 @@ function ShowEventModal({ open, onClose, modalTitle, selectedDayEvents }) {
                 {new Date(event.endDateTime).toLocaleString()}
               </p>
               <p>
-                <strong>Created By:</strong> {event?.createdBy?.firstname} (
-                {event.createdBy.email})
+                <strong>Created By:</strong>{" "}
+                {event?.createdBy?.firstname} ({event?.createdBy?.email})
               </p>
             </div>
           ))

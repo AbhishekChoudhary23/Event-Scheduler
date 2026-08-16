@@ -1,54 +1,64 @@
-const queryFn = require("../../utils/queryFunction");
+const {queryFn} = require("../../utils/queryFunction");
+const CustomError = require("../../utils/CustomError");
+const tryCatchFunction = require("../../utils/tryCatchFunction");
 
 const _createEvent = `
-    INSERT INTO
-      EVENTS (
-        TITLE,
-        DESCRIPTION,
-        STARTDATETIME,
-        ENDDATETIME,
-        CREATEDBY
-      )
-    VALUES
-      ($1, $2, $3, $4, $5)
-    RETURNING
-      *`
+  INSERT INTO
+    EVENTS (
+      TITLE,
+      DESCRIPTION,
+      STARTDATETIME,
+      ENDDATETIME,
+      CREATEDBY
+    )
+  VALUES
+    ($1, $2, $3, $4, $5)
+  RETURNING
+    *`;
 
 const _participant = `
-    SELECT
-      USERID
-    FROM
-      USERS
-    WHERE
-      EMAIL = $1`;
+  SELECT
+    USERID
+  FROM
+    USERS
+  WHERE
+    EMAIL = $1`;
 
 const _addParticipant = `
-    INSERT INTO
-      PARTICIPANTS (EVENTID, USERID)
-    VALUES
-      ($1, $2)`;
+  INSERT INTO
+    PARTICIPANTS (EVENTID, USERID)
+  VALUES
+    ($1, $2)`;
+
+const _getUserInfo = `
+  SELECT
+    EMAIL,
+    FIRSTNAME
+  FROM
+    USERS
+  WHERE
+    USERID = $1`;
 
 async function createEvent(req, res) {
   const { title, description, startDateTime, endDateTime, participants } =
     req.body;
   const { userid } = req.user;
-  console.log(userid);
 
-  if (!title || !description || !startDateTime || !endDateTime) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
+  const createEventOperation = async () => {
+    if (!title || !description || !startDateTime || !endDateTime) {
+      throw new CustomError([{ message: "Missing required fields" }], 400);
+    }
 
-  try {
     const values = [title, description, startDateTime, endDateTime, userid];
     const eventResult = await queryFn(_createEvent, values);
     const eventId = eventResult.rows[0].eventid;
 
     const participantQueries = participants.map(async (email) => {
       const userResult = await queryFn(_participant, [email]);
-      const userId = userResult.rows[0].userid;
+      const userId = userResult.rows[0]?.userid;
 
       if (!userId) {
-        throw new Error(`User with email ${email} not found`);
+        throw new CustomError([{ message: `User with email ${email} not found` }], 404);
       }
 
       await queryFn(_addParticipant, [eventId, userId]);
@@ -56,11 +66,25 @@ async function createEvent(req, res) {
 
     await Promise.all(participantQueries);
 
-    res.status(201).json({ message: "Event created successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to create event" });
-  }
+    const userInfoResult = await queryFn(_getUserInfo, [userid]);
+    const { email, firstname } = userInfoResult.rows[0];
+
+    return {
+      event: {
+        title,
+        description,
+        startDateTime,
+        endDateTime,
+        createdBy: {
+          userid,
+          email,
+          firstname
+        }
+      }
+    };
+  };
+
+  tryCatchFunction(createEventOperation, res, "Event created successfully", "Failed to create event");
 }
 
 module.exports = createEvent;

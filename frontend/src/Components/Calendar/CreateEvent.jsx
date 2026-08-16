@@ -38,7 +38,7 @@ function EventCreationModal({ open, onClose, formValue, setFormValue, datetime, 
         <Button onClick={onSubmit} color="violet" appearance="primary">
           Confirm
         </Button>
-        <Button onClick={onClose} appearance="subtle">
+        <Button onClick={onClose} color="violet" appearance="ghost">
           Cancel
         </Button>
       </Modal.Footer>

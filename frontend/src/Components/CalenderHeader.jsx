@@ -8,16 +8,16 @@ import { io } from 'socket.io-client';
 import 'rsuite/dist/rsuite.min.css';
 import '../styles/CalenderHeader.css';
 
-const socket = io.connect("http://localhost:3005");
+const socket = io.connect("http://localhost:3000");
 
 const CalendarHeader = () => {
   const [open, setOpen] = useState(false);
+  const [datetime, setDatetime] = useState([new Date(), new Date( )]);
   const [formValue, setFormValue] = useState({
     title: '',
     description: '',
     participants: '',
   });
-  const [datetime, setDatetime] = useState([new Date(), new Date()]);
 
   const navigate = useNavigate();
   const toaster = useToaster();
@@ -53,28 +53,44 @@ const CalendarHeader = () => {
       createdBy: email,
     };
 
-    socket.emit('new_event', eventData);
+    // socket.emit('new_event', eventData);
 
     fetch('http://localhost:3000/event/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify(eventData),
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
+        if (data.statusCode === 201) {
+          toaster.push(
+            <Message showIcon type="success">
+              {data.message}
+            </Message>,
+            { placement: 'topCenter', duration: 4000 }
+          );
+        } else {
+          toaster.push(
+            <Message showIcon type="error" closable>
+              {data.message}
+            </Message>,
+            { placement: 'topCenter', duration: 4000 }
+          );
+        }
+      })
+      .catch((error) => {
+        console.error(error);
         toaster.push(
-          <Message showIcon type="success">
-            Event created successfully!
+          <Message showIcon type="error" closable>
+            Failed to create event
           </Message>,
           { placement: 'topCenter', duration: 4000 }
         );
-      })
-      .catch((error) => console.error(error));
-    setOpen(false);
+      });
+    setOpen(false);    
   };
 
   return (

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Calendar } from "rsuite";
+import { useToaster, Message } from "rsuite";
+import io from "socket.io-client";
 import renderCell from "../Components/Calendar/RenderCell";
 import ShowEventModal from "../Components/Calendar/ShowEventModal";
-import io from "socket.io-client";
+import useEventHandlers from "../Hooks/useEventHandlers";
 import "rsuite/dist/rsuite.min.css";
 import "../styles/CalenderPage.css";
-import useEventHandlers from "../utils/CalenderUtils";
+import apiRequest from "../utils/apiRequest";
 
-const socket = io.connect("http://localhost:3005");
-
+const socket = io.connect(import.meta.env.SOCKET_URL);
 function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
@@ -16,45 +17,46 @@ function CalendarPage() {
   const [open, setOpen] = useState(false);
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
   const { handleOpen, handleClose } = useEventHandlers(events, setSelectedDayEvents, setOpen, setModalTitle);
+  
+  const toaster = useToaster();
+  const handleNewEvent = (eventData) => {
+    const newEvent = {
+      ...eventData,
+      start: new Date(eventData.start),
+      end: new Date(eventData.end),
+    };
+    
+    useSocketEvents(email);
+    setEvents((prevEvents) => [...prevEvents, newEvent]);
+  };
+  
+  const token = localStorage.getItem("token");
+  const fetchEvents = async () => {
+    try {
+      const data = await apiRequest(import.meta.env.VITE_GET_EVENTS, 'GET', {}, token);
+      const parsedEvents = data.data.map((event) => ({
+        ...event,
+        start: new Date(event.startDateTime),
+        end: new Date(event.endDateTime),
+      }));
+      setEvents(parsedEvents);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:3000/event", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-
-        const parsedEvents = data.map((event) => ({
-          ...event,
-          start: new Date(event.startDateTime),
-          end: new Date(event.endDateTime),
-        }));
-        setEvents(parsedEvents);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-
     fetchEvents();
-
-    const handleNewEvent = (eventData) => {
-      const newEvent = {
-        ...eventData,
-        start: new Date(eventData.startDateTime),
-        end: new Date(eventData.endDateTime),
-      };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
-    };
-
-    socket.on("new_event", handleNewEvent);
-
+    socket.on("event_invitation", handleNewEvent);
     return () => {
-      socket.off("new_event", handleNewEvent);
+      socket.off("event_invitation", handleNewEvent);
     };
   }, []);
 
+  useEffect(()=>{
+    socket.on("new_event", handleNewEvent)
+    fetchEvents();
+  },[events, setEvents])
   return (
     <div className="calendar-container">
       <Calendar

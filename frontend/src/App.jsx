@@ -1,10 +1,10 @@
-import "./App.css";
-import Login from "./Pages/Login";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./Route/ProtectedRoute";
+import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
+import ProtectedRoute from "./Route/ProtectedRoute";
 import CalendarHeader from "./Components/CalenderHeader";
 import CalendarPage from "./Pages/CalenderPage";
+import "./App.css";
 
 function App() {
   return (
@@ -23,7 +23,6 @@ function App() {
               </>
             }
           />
-          {/* <Route exact path="/home" element={<Home />} /> */}
         </Route>
       </Routes>
     </Router>
