@@ -257,6 +257,7 @@ only if the backend does not run on `http://localhost:3000`.
 | Problem | Fix |
 | --- | --- |
 | `Access denied for user 'root'@'localhost'` | `DB_USER` or `DB_PASSWORD` in `backend/.env` is wrong |
+| `Connections using insecure transport are prohibited` | The database needs TLS. It is switched on automatically when `DB_HOST` is not `localhost` (see `backend/database/config.js`) |
 | `Unknown database` | Run `npm run db:setup` in `backend/` |
 | `ECONNREFUSED ...:3306` | MySQL is not running, or `DB_PORT` is wrong |
 | "Can't reach the server" in the browser | Backend is not running, or `VITE_API_URL` points to the wrong address |

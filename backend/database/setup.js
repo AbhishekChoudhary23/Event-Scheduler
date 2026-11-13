@@ -2,17 +2,10 @@
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const { dbConfig, dbName } = require('./config');
 
 async function setup() {
-  const dbName = process.env.DB_NAME || 'eventscheduler';
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    multipleStatements: true,
-  });
+  const connection = await mysql.createConnection({ ...dbConfig, multipleStatements: true });
 
   await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
   await connection.query(`USE \`${dbName}\``);
