@@ -1,45 +1,29 @@
-const {queryFn} = require("../../utils/queryFunction");
-const { comparePassword } = require("../../utils/bcryptHashing");
-const generateToken = require("../../service/generateToken");
-const tryCatchFunction = require("../../utils/tryCatchFunction");
+const { query } = require('../../database/connection');
+const { comparePassword } = require('../../utils/bcryptHashing');
+const generateToken = require('../../service/generateToken');
+const customResponse = require('../../utils/customResponse');
+const CustomError = require('../../utils/CustomError');
 
-const _loginUser = `
-    SELECT 
-        email,
-        password,
-        userid,
-        firstname
-    FROM 
-        users 
-    WHERE 
-        email = $1`;
+async function login(req, res) {
+  const email = req.body.email?.trim().toLowerCase();
+  const { password } = req.body;
 
-const login = async (req, res) => {
-    const { email, password } = req.body;
+  if (!email || !password) {
+    throw new CustomError('Email and password are required', 400);
+  }
 
-    if (!email || !password) {
-        return customResponse(res, 400, "All fields are required.", null, true);
-    }
+  const [found] = await query(
+    'SELECT userId, firstName, email, password FROM users WHERE email = ? AND isArchived = FALSE',
+    [email]
+  );
 
-    const loginOperation = async (data) => {
-        const user = await queryFn(_loginUser, [data.email]);
+  // Same message for "no such user" and "wrong password" so emails can't be guessed.
+  if (!found || !(await comparePassword(password, found.password))) {
+    throw new CustomError('Wrong email or password', 401);
+  }
 
-        if (!user.rows.length) {
-            throw new Error("Invalid User ID or Password"); // Throw error for better handling
-        }
-
-        const isPasswordValid = await comparePassword(data.password, user.rows[0].password);
-
-        if (!isPasswordValid) {
-            throw new Error("Invalid User ID or password");
-        }
-
-        const token = generateToken(user.rows[0]);
-        const payload = { email: user.rows[0].email, userid: user.rows[0].userid };
-        return { user: payload, token };
-    };
-
-    return tryCatchFunction(loginOperation, res, "Login successful", "Something went wrong during login", { email, password });
-};
+  const user = { userId: found.userId, firstName: found.firstName, email: found.email };
+  return customResponse(res, 200, 'Logged in', { user, token: generateToken(user) });
+}
 
 module.exports = login;

@@ -1,17 +1,9 @@
 const bcrypt = require('bcrypt');
 
-// const saltRounds = 10;
+const saltRounds = Number(process.env.SALT_ROUNDS) || 10;
 
-// Hashing function
-const passwordHash = (password) => {
-    const hashedPassword = bcrypt.hash(password, parseInt(process.env.SALT_ROUNDS));
-    return hashedPassword; // Return the hashed password
-}
+const passwordHash = (password) => bcrypt.hash(password, saltRounds);
 
-// Comparison function
-const comparePassword = async(password, userPassword) => {
-    const match = await bcrypt.compare(password, userPassword);
-    return match; // Return true if passwords match, false otherwise
-}
+const comparePassword = (password, hashedPassword) => bcrypt.compare(password, hashedPassword);
 
-module.exports = { passwordHash, comparePassword }
+module.exports = { passwordHash, comparePassword };

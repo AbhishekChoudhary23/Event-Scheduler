@@ -1,10 +1,9 @@
-import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from 'react-router-dom';
+import { getToken } from '../utils/auth';
 
-const ProtectedRoute = () => {
-  const token = localStorage.getItem("token");
-
-  return token ? <Outlet/> : <Navigate to="/" />;
-};
+// Pages inside this route need a logged-in user.
+function ProtectedRoute() {
+  return getToken() ? <Outlet /> : <Navigate to="/" replace />;
+}
 
 export default ProtectedRoute;

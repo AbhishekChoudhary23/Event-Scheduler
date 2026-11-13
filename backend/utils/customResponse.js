@@ -1,16 +1,5 @@
-const customResponse = (res, statusCode, message, data = null, error = false) => {
-    const response = {
-        statusCode,
-        message,
-    };
+// Every API response has the same shape: { statusCode, message, data }.
+const customResponse = (res, statusCode, message, data = null) =>
+  res.status(statusCode).json({ statusCode, message, data });
 
-    if (error) {
-        response.timeStamp = new Date().toISOString();
-    } else {
-        response.data = data;
-    }
-
-    return res.json(response);
-};
-
-module.exports = { customResponse };
+module.exports = customResponse;

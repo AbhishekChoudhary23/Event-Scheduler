@@ -1,54 +1,38 @@
-const {queryFn} = require("../../utils/queryFunction");
+const { randomUUID } = require('crypto');
+const { query } = require('../../database/connection');
 const { passwordHash } = require('../../utils/bcryptHashing');
-const { customResponse } = require("../../utils/customResponse");
+const customResponse = require('../../utils/customResponse');
+const CustomError = require('../../utils/CustomError');
 
-const existingUser = `
-    SELECT 
-        email 
-    FROM 
-        users 
-    WHERE 
-        email = $1;
-`;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const _signupUserQuery = `
-    INSERT INTO 
-        users (firstname, email, password) 
-    VALUES 
-        ($1, $2, $3) 
-     RETURNING *;
-`;
+async function signup(req, res) {
+  const firstName = req.body.firstName?.trim();
+  const email = req.body.email?.trim().toLowerCase();
+  const { password } = req.body;
 
-const _getUserByEmail = `
-    SELECT 
-        firstname, 
-        email 
-    FROM 
-        users 
-    WHERE 
-        email = $1;
-`;
+  if (!firstName || !email || !password) {
+    throw new CustomError('First name, email and password are required', 400);
+  }
+  if (!EMAIL_PATTERN.test(email)) {
+    throw new CustomError('Enter a valid email address', 400);
+  }
+  if (password.length < 6) {
+    throw new CustomError('Password must be at least 6 characters', 400);
+  }
 
-const signup = async (req, res) => {
-    const { firstname, email, password } = req.body;
+  const existing = await query('SELECT userId FROM users WHERE email = ?', [email]);
+  if (existing.length) {
+    throw new CustomError('An account with this email already exists', 409);
+  }
 
-    try {
-        const checkExistingUser = await queryFn(existingUser, [email]);
-        if (checkExistingUser.rows.length > 0) {
-            return customResponse(res, 401, "User already Exists with this email.", null, true);
-        }
+  const userId = randomUUID();
+  await query(
+    'INSERT INTO users (userId, firstName, email, password) VALUES (?, ?, ?, ?)',
+    [userId, firstName, email, await passwordHash(password)]
+  );
 
-        const hashedPassword = await passwordHash(password);
-        const values = [firstname, email, hashedPassword];
-
-        const user = await queryFn(_signupUserQuery, values);
-        const userDetails = await queryFn(_getUserByEmail, [email]);
-
-        return customResponse(res, 201, "User created successfully", userDetails.rows[0]);
-    } catch (error) {
-        console.error("Error during signup:", error);
-        return customResponse(res, 400, "SOMETHING WENT WRONG", null, true);
-    }
-};
+  return customResponse(res, 201, 'Account created', { userId, firstName, email });
+}
 
 module.exports = signup;

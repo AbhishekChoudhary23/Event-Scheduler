@@ -1,22 +1,20 @@
-const jwt = require("jsonwebtoken");
-const CustomError = require("../utils/CustomError");
+const jwt = require('jsonwebtoken');
+const CustomError = require('../utils/CustomError');
 
-// Middleware to authenticate JWT
+// Reads "Authorization: Bearer <token>" and puts the logged-in user on req.user.
 const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+  const token = req.headers.authorization?.split(' ')[1];
 
-    if (!token) {
-        throw new CustomError([{ message: "Unauthorized: No token provided" }], 401);
-    }
+  if (!token) {
+    return next(new CustomError('Log in to continue', 401));
+  }
 
-    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
-        if (err) {
-            throw new CustomError([{ message: "Forbidden: Invalid token" }], 403);
-        }
-        req.user = user;
-        next();
-    });
+  try {
+    req.user = jwt.verify(token, process.env.SECRET_KEY);
+    next();
+  } catch {
+    next(new CustomError('Session expired. Log in again', 401));
+  }
 };
 
 module.exports = authenticateToken;

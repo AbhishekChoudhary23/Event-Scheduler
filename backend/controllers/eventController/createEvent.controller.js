@@ -1,90 +1,42 @@
-const {queryFn} = require("../../utils/queryFunction");
-const CustomError = require("../../utils/CustomError");
-const tryCatchFunction = require("../../utils/tryCatchFunction");
-
-const _createEvent = `
-  INSERT INTO
-    EVENTS (
-      TITLE,
-      DESCRIPTION,
-      STARTDATETIME,
-      ENDDATETIME,
-      CREATEDBY
-    )
-  VALUES
-    ($1, $2, $3, $4, $5)
-  RETURNING
-    *`;
-
-const _participant = `
-  SELECT
-    USERID
-  FROM
-    USERS
-  WHERE
-    EMAIL = $1`;
-
-const _addParticipant = `
-  INSERT INTO
-    PARTICIPANTS (EVENTID, USERID)
-  VALUES
-    ($1, $2)`;
-
-const _getUserInfo = `
-  SELECT
-    EMAIL,
-    FIRSTNAME
-  FROM
-    USERS
-  WHERE
-    USERID = $1`;
+const { randomUUID } = require('crypto');
+const { pool } = require('../../database/connection');
+const { sendToUsers } = require('../../socket');
+const customResponse = require('../../utils/customResponse');
+const { readEventInput, buildEvent } = require('./eventHelpers');
 
 async function createEvent(req, res) {
-  const { title, description, startDateTime, endDateTime, participants } =
-    req.body;
-  const { userid } = req.user;
+  const creator = req.user;
+  const input = await readEventInput(req.body, creator);
 
-  const createEventOperation = async () => {
-    if (!title || !description || !startDateTime || !endDateTime) {
-      throw new CustomError([{ message: "Missing required fields" }], 400);
+  // Save the event and its participants together: both succeed or neither does.
+  const eventId = randomUUID();
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.query(
+      'INSERT INTO events (eventId, title, description, startDateTime, endDateTime, createdBy) VALUES (?, ?, ?, ?, ?, ?)',
+      [eventId, input.title, input.description, input.start, input.end, creator.userId]
+    );
+    if (input.invited.length) {
+      await connection.query('INSERT INTO participants (eventId, userId) VALUES ?', [
+        input.invited.map((user) => [eventId, user.userId]),
+      ]);
     }
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 
-    const values = [title, description, startDateTime, endDateTime, userid];
-    const eventResult = await queryFn(_createEvent, values);
-    const eventId = eventResult.rows[0].eventid;
+  const event = buildEvent(eventId, input, creator);
 
-    const participantQueries = participants.map(async (email) => {
-      const userResult = await queryFn(_participant, [email]);
-      const userId = userResult.rows[0]?.userid;
+  // Live updates: the creator's other tabs get the event, invited users get an invitation.
+  sendToUsers([creator.userId], 'new_event', event);
+  sendToUsers(input.invited.map((user) => user.userId), 'event_invitation', event);
 
-      if (!userId) {
-        throw new CustomError([{ message: `User with email ${email} not found` }], 404);
-      }
-
-      await queryFn(_addParticipant, [eventId, userId]);
-    });
-
-    await Promise.all(participantQueries);
-
-    const userInfoResult = await queryFn(_getUserInfo, [userid]);
-    const { email, firstname } = userInfoResult.rows[0];
-
-    return {
-      event: {
-        title,
-        description,
-        startDateTime,
-        endDateTime,
-        createdBy: {
-          userid,
-          email,
-          firstname
-        }
-      }
-    };
-  };
-
-  tryCatchFunction(createEventOperation, res, "Event created successfully", "Failed to create event");
+  return customResponse(res, 201, 'Event created', event);
 }
 
 module.exports = createEvent;

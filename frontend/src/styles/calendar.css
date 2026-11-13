@@ -1,0 +1,475 @@
+/* The calendar page: header, month title, month grid and the day agenda. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---------- Header ---------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem clamp(1rem, 3vw, 2.5rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.brand-mark {
+  flex: none;
+  width: 1.5rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  background: var(--highlighter);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  transform: rotate(-6deg);
+}
+
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--sheet);
+  font-weight: 700;
+}
+
+.user-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Month title and controls ---------- */
+
+.planner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 3vw, 2.5rem) 2rem;
+}
+
+.planner-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.month-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2em;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 8vw, 6.5rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+}
+
+.month-name {
+  display: inline-block;
+}
+
+.month-year {
+  color: var(--muted);
+  font-size: 0.32em;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.roll-next {
+  animation: roll-up 0.4s var(--ease-out);
+}
+
+.roll-prev {
+  animation: roll-down 0.4s var(--ease-out);
+}
+
+.roll-none {
+  animation: roll-up 0.6s var(--ease-out);
+}
+
+.planner-controls,
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.planner-controls {
+  gap: 1rem;
+}
+
+/* ---------- Month grid ---------- */
+
+.planner-body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.month {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--sheet);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.weekdays span {
+  padding: 0.625rem 0.75rem;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(5.25rem, 1fr);
+}
+
+.slide-next {
+  animation: slide-from-right 0.35s var(--ease-out);
+}
+
+.slide-prev {
+  animation: slide-from-left 0.35s var(--ease-out);
+}
+
+.slide-none {
+  animation: fade-in 0.5s;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border: none;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.day:nth-child(7n) {
+  border-right: none;
+}
+
+.day:nth-last-child(-n + 7) {
+  border-bottom: none;
+}
+
+.day:hover {
+  background: rgba(22, 38, 29, 0.045);
+}
+
+.day:focus-visible {
+  outline-offset: -2px;
+}
+
+.day.is-selected {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.day.is-outside .day-number,
+.day.is-outside .day-events {
+  opacity: 0.4;
+}
+
+.day-number {
+  position: relative;
+  z-index: 0;
+  min-width: 1.75rem;
+  padding: 0 0.3rem;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* Today is marked with a highlighter stroke that draws itself in. */
+.day.is-today .day-number::before {
+  content: '';
+  position: absolute;
+  inset: 0.2rem -0.15rem;
+  z-index: -1;
+  border-radius: 3px;
+  background: var(--highlighter);
+  transform: rotate(-5deg);
+  transform-origin: left center;
+  animation: highlight 0.6s var(--ease-out) 0.35s backwards;
+}
+
+.day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.chip {
+  overflow: hidden;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-mine {
+  background: var(--pine);
+  color: #fff;
+}
+
+.chip-invited {
+  background: var(--plum-tint);
+  color: var(--plum);
+  box-shadow: inset 2px 0 0 var(--plum);
+}
+
+.chip-more {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+/* ---------- Day agenda ---------- */
+
+.agenda {
+  position: sticky;
+  top: 1.25rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--sheet);
+}
+
+.agenda-weekday {
+  color: rgba(248, 250, 246, 0.65);
+  font-size: var(--text-sm);
+}
+
+.agenda-date {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.agenda-empty {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  color: rgba(248, 250, 246, 0.75);
+}
+
+.agenda-empty .button-outline {
+  border-color: var(--sheet);
+  color: var(--sheet);
+}
+
+.agenda-empty .button-outline:hover {
+  background: var(--sheet);
+  color: var(--ink);
+}
+
+.agenda-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.agenda-item {
+  padding: 0.875rem 1rem;
+  border-left: 3px solid var(--highlighter);
+  border-radius: var(--radius-sm);
+  background: rgba(248, 250, 246, 0.07);
+  animation: agenda-in 0.35s var(--ease-out) backwards;
+}
+
+.agenda-item.is-invited {
+  border-left-color: #c9a6ee;
+}
+
+.agenda-time {
+  color: rgba(248, 250, 246, 0.7);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.agenda-description {
+  margin-top: 0.25rem;
+  color: rgba(248, 250, 246, 0.85);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.agenda-meta {
+  margin-top: 0.375rem;
+  color: rgba(248, 250, 246, 0.6);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.agenda-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* The "Delete this event?" question replaces the Edit and Delete buttons. */
+.agenda-confirm {
+  animation: agenda-in 0.25s var(--ease-out);
+}
+
+.agenda-confirm p {
+  width: 100%;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* ---------- Animations ---------- */
+
+@keyframes highlight {
+  from { transform: rotate(-5deg) scaleX(0); }
+}
+
+@keyframes roll-up {
+  from { opacity: 0; transform: translateY(0.35em); }
+}
+
+@keyframes roll-down {
+  from { opacity: 0; transform: translateY(-0.35em); }
+}
+
+@keyframes slide-from-right {
+  from { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes slide-from-left {
+  from { opacity: 0; transform: translateX(-28px); }
+}
+
+@keyframes agenda-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* ---------- Smaller screens ---------- */
+
+@media (max-width: 960px) {
+  .planner-body {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-name,
+  .avatar {
+    display: none;
+  }
+
+  .planner-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .month-grid {
+    grid-auto-rows: minmax(4rem, 1fr);
+  }
+
+  .weekdays span {
+    padding: 0.5rem 0;
+    text-align: center;
+  }
+
+  .day {
+    align-items: center;
+    padding: 0.375rem 0.125rem;
+  }
+
+  .day-number {
+    font-size: var(--text-md);
+  }
+
+  /* No room for titles: each event becomes a small bar. */
+  .day-events {
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.15rem;
+  }
+
+  .chip {
+    width: 0.75rem;
+    height: 0.3rem;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .chip-invited {
+    background: var(--plum);
+  }
+
+  .chip-more {
+    display: none;
+  }
+}

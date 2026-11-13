@@ -1,73 +1,63 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useToaster, Message } from 'rsuite';
-import "../styles/Login.css";
-import apiRequest from "../utils/apiRequest";
+import { useState } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import AuthLayout from '../Components/AuthLayout';
+import { useToast } from '../Components/Toast';
+import { apiRequest } from '../utils/api';
+import { getToken, saveSession } from '../utils/auth';
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const toaster = useToaster();
+  const showToast = useToast();
 
-  const showToast = (type, message) => {
-    toaster.push(
-      <Message showIcon type={type}>
-        {message}
-      </Message>,
-      { placement: 'topEnd', duration:4000}
-    );
-  };
+  // Already logged in: skip the form.
+  if (getToken()) return <Navigate to="/home" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
-      const data = await apiRequest(import.meta.env.VITE_LOGIN_URL, 'POST', { email, password });
-
-      if (data && data.data) {
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("email", data.data.user.email);
-        localStorage.setItem("userId", data.data.user.userid); 
-        showToast('success', 'Login successful!');
-        navigate("/home", { replace: true });
-      } else {
-        throw new Error("Login failed. Please check your credentials.");
-      }
-    } catch (err) {
-      showToast('error', err.message);
+      saveSession(await apiRequest('/user/login', 'POST', { email, password }));
+      navigate('/home', { replace: true });
+    } catch (error) {
+      showToast(error.message, 'error');
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container">
-      <div className="form-container">
-        <p className="title">Login</p>
-        <form className="form" onSubmit={handleSubmit}>
-          <input 
-            type="email" 
-            className="input" 
-            placeholder="Email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
+    <AuthLayout
+      title="Log in"
+      footer={<>New here? <Link to="/signup">Create an account</Link></>}
+    >
+      <form className="form" onSubmit={handleSubmit}>
+        <label className="field">
+          <span>Email</span>
+          <input
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-          <input 
-            type="password" 
-            className="input" 
-            placeholder="Password" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
+        </label>
+        <label className="field">
+          <span>Password</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="page-link">
-            <span className="page-link-label">Forgot Password?</span>
-          </p>
-          <button className="form-btn">Log in</button>
-        </form>
-        <p className="sign-up-label">
-          Don't have an account?<span className="sign-up-link"><Link to="/signup">Sign up</Link></span>
-        </p>
-      </div>
-    </div>
+        </label>
+        <button className="button button-primary" disabled={loading}>
+          {loading ? 'Logging in…' : 'Log in'}
+        </button>
+      </form>
+    </AuthLayout>
   );
 }
 
