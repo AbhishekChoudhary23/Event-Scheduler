@@ -1,0 +1,11 @@
+# Netlify reads this file from the configured base directory (frontend/).
+# Paths below are relative to that base directory.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Serve index.html for client-side routes handled by React Router.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
