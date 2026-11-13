@@ -12,9 +12,8 @@ const pool = mysql.createPool({
   connectionLimit: 20,
   timezone: 'Z',
   ssl: {
-    ca: fs.readFileSync("/etc/secrets/isrgrootx1.pem", "utf8"),
     minVersion: "TLSv1.2",
-    rejectUnauthorized: true
+    ca: fs.readFileSync(process.env.TIDB_CA_PATH)
   }
 });
 
