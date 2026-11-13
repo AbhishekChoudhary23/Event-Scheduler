@@ -9,8 +9,12 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || 'eventscheduler',
-  connectionLimit: 10,
+  connectionLimit: 20,
   timezone: 'Z',
+  ssl: {
+    minVersion: "TLSv1.2",
+    ca: fs.readFileSync(process.env.TIDB_CA_PATH)
+  }
 });
 
 // Run a query and get the rows back. Use `?` placeholders for params.
